@@ -1,5 +1,7 @@
+from __future__ import annotations
 from typing import List
 import tqdm
+import pickle
 import random
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,6 +22,15 @@ class FFSN_MultiClass:
             self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
             self.B[i + 1] = np.zeros((1, self.sizes[i + 1]))
         self._w_layers_idx = list(self.W.keys())
+
+    def dump(self, path: str) -> None:
+        with open(path, "wb") as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def load(path: str) -> FFSN_MultiClass:
+        with open(path, "rb") as f:
+            return pickle.load(f)
 
     @staticmethod
     def sigmoid(x):
