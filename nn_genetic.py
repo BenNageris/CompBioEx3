@@ -1,11 +1,14 @@
 from __future__ import annotations
 from typing import List, Dict, Optional
+from sklearn.metrics import accuracy_score
 import tqdm
 import pickle
 import random
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
+
+from dataset import DataSet
 
 
 class FFSN_GeneticMultiClass:
@@ -34,6 +37,7 @@ class FFSN_GeneticMultiClass:
             for i in range(self.nh + 1):
                 self.W[i + 1] = np.random.randn(self.sizes[i], self.sizes[i + 1])
                 self._n_neurons += self.W[i + 1].size
+                # TODO:: consider change to np.ones
                 self.B[i + 1] = np.zeros((1, self.sizes[i + 1]))
                 self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
         else:
@@ -62,6 +66,12 @@ class FFSN_GeneticMultiClass:
     def softmax(x):
         exps = np.exp(x)
         return exps / np.sum(exps)
+
+    def fitness(self, x, y):
+        Y_pred = self.predict(x)
+        Y_pred = np.argmax(Y_pred, 1)
+
+        return accuracy_score(Y_pred, y)
 
     def forward_pass(self, x):
         self.A = {}
@@ -102,35 +112,32 @@ class FFSN_GeneticMultiClass:
     def crossover(nn_1: FFSN_GeneticMultiClass, nn_2: FFSN_GeneticMultiClass) -> FFSN_GeneticMultiClass:
         assert nn_1._n_neurons == nn_2._n_neurons, (f"number of neurons don't match nn_1:"
                                                     f"{nn_1._n_neurons}, nn_2:{nn_2._n_neurons}")
-        print(f"n neurons:{nn_1._n_neurons}")
-        print(f"layers:{nn_1.W.keys()}")
-        # split_idx = random.randint(0, nn_1._n_neurons - 1)
-        split_idx = 28
-        print(f"{split_idx=}")
+        split_idx = random.randint(0, nn_1._n_neurons - 1)
         if split_idx == nn_1._n_neurons:
             # copy all from nn_1
             layer_idx, (x_loc, y_loc) = nn_1._max_layer_idx, nn_1.W[nn_1._max_layer_idx].shape
         else:
             layer_idx, x_loc, y_loc = nn_1.get_neuron_location(neuron_idx=split_idx)
-        print(f"{layer_idx=}, {x_loc=},{y_loc=}")
         w = {}
+        b = {}
         # copy until the split layer - nn1
         for layer in range(1, layer_idx):
             w[layer] = nn_1.W[layer]
+
         # split layer copy - nn1 & nn2
-        print(f"{layer_idx}")
         split_layer_x_size, split_layer_y_size = nn_1.W[layer_idx].shape
         found = False
-        layer = []
+        layer_weights = []
         for x in range(split_layer_x_size):
-            tmp_layer = []
+            tmp_layer_weights = []
             for y in range(split_layer_y_size):
                 if x == x_loc and y == y_loc:
                     found = True
                 nn_to_query = nn_2 if found else nn_1
-                tmp_layer.append(nn_to_query.W[layer_idx][x][y])
-            layer.append(tmp_layer)
-        w[layer_idx] = np.array(layer)
+                tmp_layer_weights.append(nn_to_query.W[layer_idx][x][y])
+            layer_weights.append(tmp_layer_weights)
+        w[layer_idx] = np.array(layer_weights)
+
         # post split layers - nn2
         for layer in range(layer_idx + 1, nn_2._max_layer_idx + 1):
             w[layer] = nn_2.W[layer]
