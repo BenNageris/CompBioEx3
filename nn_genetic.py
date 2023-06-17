@@ -17,10 +17,9 @@ class FFSN_GeneticMultiClass:
             n_inputs: int,
             n_outputs: int,
             hidden_sizes: List[int],
-            mutation_p: float = 0.05,
+            mutation_p: float = 1,
             max_mutation_diff: float = 0.2,
-            w: Optional[Dict[int, np.array]] = None,
-            b: Optional[Dict[int, np.array]] = None):
+            w: Optional[Dict[int, np.array]] = None):
         self.nx = n_inputs
         self.ny = n_outputs
         self.hidden_sizes = hidden_sizes
@@ -28,23 +27,20 @@ class FFSN_GeneticMultiClass:
         self._max_mutation_diff = max_mutation_diff
         self.sizes = [self.nx] + hidden_sizes + [self.ny]
         self._w_layer_size = {}
+        self._n_neurons = 0
 
-        if w is None or b is None:
+        if w is None:
             # randomize if bias or weight isn't passed
             self.W = {}
-            self.B = {}
-            self._n_neurons = 0
             for i in range(self.nh + 1):
                 self.W[i + 1] = np.random.randn(self.sizes[i], self.sizes[i + 1])
                 self._n_neurons += self.W[i + 1].size
-                # TODO:: consider change to np.ones
-                self.B[i + 1] = np.zeros((1, self.sizes[i + 1]))
                 self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
         else:
             self.W = w
-            self.B = b
             for i in range(self.nh + 1):
                 self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
+                self._n_neurons += self.W[i + 1].size
         self._w_layers_idx = list(self.W.keys())
         self._max_layer_idx = max(self._w_layers_idx)
         self._mutation_p = mutation_p
@@ -78,9 +74,9 @@ class FFSN_GeneticMultiClass:
         self.H = {}
         self.H[0] = x.reshape(1, -1)
         for i in range(self.nh):
-            self.A[i + 1] = np.matmul(self.H[i], self.W[i + 1]) + self.B[i + 1]
+            self.A[i + 1] = np.matmul(self.H[i], self.W[i + 1])
             self.H[i + 1] = self.sigmoid(self.A[i + 1])
-        self.A[self.nh + 1] = np.matmul(self.H[self.nh], self.W[self.nh + 1]) + self.B[self.nh + 1]
+        self.A[self.nh + 1] = np.matmul(self.H[self.nh], self.W[self.nh + 1])
         self.H[self.nh + 1] = self.softmax(self.A[self.nh + 1])
         return self.H[self.nh + 1]
 
@@ -119,7 +115,6 @@ class FFSN_GeneticMultiClass:
         else:
             layer_idx, x_loc, y_loc = nn_1.get_neuron_location(neuron_idx=split_idx)
         w = {}
-        b = {}
         # copy until the split layer - nn1
         for layer in range(1, layer_idx):
             w[layer] = nn_1.W[layer]
@@ -141,13 +136,11 @@ class FFSN_GeneticMultiClass:
         # post split layers - nn2
         for layer in range(layer_idx + 1, nn_2._max_layer_idx + 1):
             w[layer] = nn_2.W[layer]
-
         return FFSN_GeneticMultiClass(
             n_inputs=nn_1.nx,
             hidden_sizes=nn_1.hidden_sizes,
-            n_outputs=nn_2.ny,
-            w=w,
-            b={}
+            n_outputs=nn_1.ny,
+            w=w
         )
 
     def get_neuron_location(self, neuron_idx: int):
@@ -169,4 +162,3 @@ class FFSN_GeneticMultiClass:
         yl = -np.log(yl)
         yl = np.mean(yl)
         return yl
-

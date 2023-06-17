@@ -15,12 +15,12 @@ class FFSN_MultiClass:
         self.sizes = [self.nx] + hidden_sizes + [self.ny]
         print(self.sizes)
         self.W = {}
-        self.B = {}
+        # self.B = {}
         self._w_layer_size = {}
         for i in range(self.nh + 1):
             self.W[i + 1] = np.random.randn(self.sizes[i], self.sizes[i + 1])
             self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
-            self.B[i + 1] = np.zeros((1, self.sizes[i + 1]))
+            # self.B[i + 1] = np.zeros((1, self.sizes[i + 1]))
         self._w_layers_idx = list(self.W.keys())
 
     def dump(self, path: str) -> None:
@@ -46,9 +46,9 @@ class FFSN_MultiClass:
         self.H = {}
         self.H[0] = x.reshape(1, -1)
         for i in range(self.nh):
-            self.A[i + 1] = np.matmul(self.H[i], self.W[i + 1]) + self.B[i + 1]
+            self.A[i + 1] = np.matmul(self.H[i], self.W[i + 1])  # + self.B[i + 1]
             self.H[i + 1] = self.sigmoid(self.A[i + 1])
-        self.A[self.nh + 1] = np.matmul(self.H[self.nh], self.W[self.nh + 1]) + self.B[self.nh + 1]
+        self.A[self.nh + 1] = np.matmul(self.H[self.nh], self.W[self.nh + 1])  # + self.B[self.nh + 1]
         self.H[self.nh + 1] = self.softmax(self.A[self.nh + 1])
         return self.H[self.nh + 1]
 
@@ -102,7 +102,7 @@ class FFSN_MultiClass:
         if initialize:
             for i in range(self.nh + 1):
                 self.W[i + 1] = np.random.randn(self.sizes[i], self.sizes[i + 1])
-                self.B[i + 1] = np.zeros((1, self.sizes[i + 1]))
+                # self.B[i + 1] = np.zeros((1, self.sizes[i + 1]))
 
         for epoch in tqdm.tqdm(range(epochs), total=epochs, unit="epoch"):
             dW = {}
@@ -122,7 +122,7 @@ class FFSN_MultiClass:
             m = X.shape[1]
             for i in range(self.nh + 1):
                 self.W[i + 1] -= learning_rate * (dW[i + 1] / m)
-                self.B[i + 1] -= learning_rate * (dB[i + 1] / m)
+                # self.B[i + 1] -= learning_rate * (dB[i + 1] / m)
 
             if display_loss:
                 Y_pred = self.predict(X)

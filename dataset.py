@@ -9,23 +9,32 @@ import numpy
 class DataSet:
     P_TRAIN_DEFAULT = 0.75
 
-    def __init__(self, nn_dataset_list: List, nn_dataset_dict):
+    def __init__(self, nn_dataset_list: List, nn_dataset_dict, p_train: float = P_TRAIN_DEFAULT):
         self._nn_dataset_list = nn_dataset_list
         self._nn_dataset_dict = nn_dataset_dict
+        self._p_train = p_train
+
+        self.x_train, self.x_val, self.y_train, self.y_val = self.train_test_split(self._p_train)
 
     @staticmethod
-    def parse_nn_file(path: str) -> DataSet:
+    def _transform_bias(bitwise_str: str) -> str:
+        return bitwise_str + "1"
+
+    @staticmethod
+    def parse_nn_file(path: str, p_train: float = P_TRAIN_DEFAULT) -> DataSet:
         with open(path, "r") as f:
             classifications_lines = f.readlines()
         nn_dataset_dict = {}
         nn_dataset_list = []
         for row in classifications_lines:
             bitwise_txt, classification = row.split()
+            bitwise_txt = DataSet._transform_bias(bitwise_txt)
             nn_dataset_list.append((numpy.array([int(bit) for bit in bitwise_txt]), int(classification)))
             nn_dataset_dict[bitwise_txt] = classification
         return DataSet(
             nn_dataset_list=nn_dataset_list,
-            nn_dataset_dict=nn_dataset_dict
+            nn_dataset_dict=nn_dataset_dict,
+            p_train=p_train
         )
 
     def get_classification(self, bitwise_txt: str) -> Optional[str]:
