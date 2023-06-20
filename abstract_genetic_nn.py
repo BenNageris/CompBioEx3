@@ -19,7 +19,7 @@ class AbstractGeneticNN:
         raise NotImplementedError
 
     @abstractmethod
-    def muatation(self):
+    def mutation(self):
         raise NotImplementedError
 
     def __init__(
@@ -33,7 +33,7 @@ class AbstractGeneticNN:
         self.nx = n_inputs
         self.ny = n_outputs
         self.hidden_sizes = hidden_sizes
-        self.nh = len(hidden_sizes)
+        self.nh: int = len(hidden_sizes)
         self._max_mutation_diff = max_mutation_diff
         self.sizes = [self.nx] + hidden_sizes + [self.ny]
         self._w_layer_size = {}
