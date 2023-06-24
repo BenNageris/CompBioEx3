@@ -1,10 +1,13 @@
 from __future__ import annotations
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Callable
+
+import numpy.random
 from sklearn.metrics import accuracy_score
 import tqdm
 import pickle
 import random
 import itertools
+import activation_functions
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -17,15 +20,18 @@ class FFSN_GeneticMultiClass:
             n_inputs: int,
             n_outputs: int,
             hidden_sizes: List[int],
-            mutation_p: float = 1,
-            max_mutation_diff: float = 0.2,
-            w: Optional[Dict[int, np.array]] = None):
+            mutation_p: float = 1.0,
+            max_mutation_diff: float = 0.3,
+            w: Optional[Dict[int, np.array]] = None,
+            activation_func: Callable = activation_functions.binary_step
+    ):
         self.nx = n_inputs
         self.ny = n_outputs
         self.hidden_sizes = hidden_sizes
         self.nh = len(hidden_sizes)
         self._max_mutation_diff = max_mutation_diff
         self.sizes = [self.nx] + hidden_sizes + [self.ny]
+        self._activation_func = activation_func
         self._w_layer_size = {}
         self._n_neurons = 0
 
@@ -33,11 +39,13 @@ class FFSN_GeneticMultiClass:
             # randomize if bias or weight isn't passed
             self.W = {}
             for i in range(self.nh + 1):
-                self.W[i + 1] = np.random.randn(self.sizes[i], self.sizes[i + 1])
+                self.W[i + 1] = np.random.uniform(-1, 1, size=(self.sizes[i], self.sizes[i + 1]))
+                # self.W[i + 1] = np.random.randn(self.sizes[i], self.sizes[i + 1])
                 self._n_neurons += self.W[i + 1].size
                 self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
         else:
-            self.W = w
+            # print(f"w={hex(id(w))}")
+            self.W = w.copy()
             for i in range(self.nh + 1):
                 self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
                 self._n_neurons += self.W[i + 1].size
@@ -54,18 +62,10 @@ class FFSN_GeneticMultiClass:
         with open(path, "rb") as f:
             return pickle.load(f)
 
-    @staticmethod
-    def sigmoid(x):
-        return 1.0 / (1.0 + np.exp(-x))
-
-    @staticmethod
-    def softmax(x):
-        exps = np.exp(x)
-        return exps / np.sum(exps)
-
     def fitness(self, x, y):
         Y_pred = self.predict(x)
-        Y_pred = np.argmax(Y_pred, 1)
+        # print(Y_pred)
+        # Y_pred = np.argmax(Y_pred, 1)
 
         return accuracy_score(Y_pred, y)
 
@@ -75,10 +75,21 @@ class FFSN_GeneticMultiClass:
         self.H[0] = x.reshape(1, -1)
         for i in range(self.nh):
             self.A[i + 1] = np.matmul(self.H[i], self.W[i + 1])
-            self.H[i + 1] = self.sigmoid(self.A[i + 1])
+            self.H[i + 1] = activation_functions.binary_step(self.A[i + 1])
+            # TODO: think about replacing sigmoid with step
+            # print(f"{self.A[i + 1]}")
+            # print(f"after step:{activation_functions.binary_step(self.A[i+1])}")
+            # self.H[i + 1] = activation_functions.sigmoid(self.A[i + 1])
         self.A[self.nh + 1] = np.matmul(self.H[self.nh], self.W[self.nh + 1])
-        self.H[self.nh + 1] = self.softmax(self.A[self.nh + 1])
-        return self.H[self.nh + 1]
+        # print(f"A-after-all:{self.A[self.nh+1]}")
+        output = activation_functions.binary_step(self.A[self.nh + 1])
+        # print(f"A-after-all:{output}")
+        return output
+        # self.H[self.nh + 1] = activation_functions.softmax(self.A[self.nh + 1])
+        # print(f"out-after-all:{self.H[self.nh + 1]}")
+        # print(self.H[self.nh + 1])
+        # asdasd
+        # return self.H[self.nh + 1]
 
     def predict(self, X):
         Y_pred = []
@@ -87,27 +98,24 @@ class FFSN_GeneticMultiClass:
             Y_pred.append(y_pred)
         return np.array(Y_pred).squeeze()
 
-    @staticmethod
-    def grad_sigmoid(x):
-        return x * (1 - x)
-
     def mutation(self):
-        mut = random.random()
-        if mut < self._mutation_p:
-            randomized_layer = random.choice(self._w_layers_idx)
+        # randomized_layer = random.choice(self._w_layers_idx)
+        # if random.random() < 0.3:
+        for layer_idx in self.W:
             layer = []
-            for layer_weights in self.W[randomized_layer]:
+            for layer_weights in self.W[layer_idx]:
                 tmp_layer = []
                 for neuron in layer_weights:
-                    d = random.uniform(-1 * self._max_mutation_diff, self._max_mutation_diff)
+                    d = numpy.random.normal() * 0.05
                     tmp_layer.append(neuron + d)
                 layer.append(tmp_layer)
-            self.W[randomized_layer] = np.array(layer)
+            self.W[layer_idx] = np.array(layer)
 
     @staticmethod
     def crossover(nn_1: FFSN_GeneticMultiClass, nn_2: FFSN_GeneticMultiClass) -> FFSN_GeneticMultiClass:
         assert nn_1._n_neurons == nn_2._n_neurons, (f"number of neurons don't match nn_1:"
                                                     f"{nn_1._n_neurons}, nn_2:{nn_2._n_neurons}")
+        """
         split_idx = random.randint(0, nn_1._n_neurons - 1)
         if split_idx == nn_1._n_neurons:
             # copy all from nn_1
@@ -136,12 +144,26 @@ class FFSN_GeneticMultiClass:
         # post split layers - nn2
         for layer in range(layer_idx + 1, nn_2._max_layer_idx + 1):
             w[layer] = nn_2.W[layer]
-        return FFSN_GeneticMultiClass(
+        """
+        # alternative
+        w = {}
+        for layer_idx in nn_1.W:
+            layer = []
+            for layer1_weights, layer2_weights in zip(nn_1.W[layer_idx], nn_2.W[layer_idx]):
+                tmp_layer = []
+                for neuron_1, neuron_2 in zip(layer1_weights, layer2_weights):
+                    tmp_layer.append(neuron_1 * 0.5 + neuron_2 * 0.5)
+                layer.append(tmp_layer)
+            w[layer_idx] = np.array(layer)
+
+        child = FFSN_GeneticMultiClass(
             n_inputs=nn_1.nx,
             hidden_sizes=nn_1.hidden_sizes,
             n_outputs=nn_1.ny,
             w=w
         )
+        child.mutation()
+        return child
 
     def get_neuron_location(self, neuron_idx: int):
         layers = sorted(self.W.keys())

@@ -17,7 +17,7 @@ class GeneticAlgo:
             hidden_sizes=[],
             n_outputs=2,
             tournament_winner_probability: float = 0.5,
-            tournament_size: int = 5,
+            tournament_size: int = 3,
     ):
         self._n_population = n_population
         self._dataset = dataset
@@ -42,9 +42,9 @@ class GeneticAlgo:
                 (sol, sol.fitness(self._dataset.x_train, self._dataset.y_train))
             )
         self.sort_population()
-        self._best_sol , self._best_seen_score = self._population[0]
-        print(f"best seen solution:{self._best_sol}, best seen score:{self._best_seen_score}")
-        print(self._population)
+        self._best_sol, self._best_seen_score = self._population[0]
+        # print(f"best seen solution:{self._best_sol}, best seen score:{self._best_seen_score}")
+        # print(self._population)
 
     def sort_population(self):
         self._population = self.sort_by_fitness(self._population)
@@ -62,12 +62,11 @@ class GeneticAlgo:
         best_sol_fitness_stat = []
         avg_sol_fitness_stat = []
 
-        elitism_ratio = 0.1
-        crossover_ratio = 0.9
-        mutation_ratio = 0.2
+        elitism_ratio = 0.02
+        crossover_ratio = 0.95
+        mutation_ratio = 0.3
         for i in range(n_episodes):
             self._best_sol, self._best_seen_score = self._population[0]
-
             average = self.get_avg_fitness()
             if should_graph:
                 best_sol_fitness_stat.append(self._best_seen_score)
@@ -84,35 +83,44 @@ class GeneticAlgo:
             # crossovers
             crossover_idx = 0
             while len(next_gen) != self._n_population:
-                indexes = sorted(random.sample(range(self._n_population), k=self._tournament_size))
-                idx = random.choices(indexes, k=1, weights=self._tournament_prob)[0]
-                indexes_2 = sorted(random.sample(range(self._n_population), k=self._tournament_size))
-                idx2 = random.choices(indexes_2, k=1, weights=self._tournament_prob)[0]
+                # indexes = sorted(random.sample(range(self._n_population), k=self._tournament_size))
+                idx = 0 #random.choices(indexes, k=1, weights=self._tournament_prob)[0]
+                # indexes_2 = sorted(random.sample(range(self._n_population), k=self._tournament_size))
+                # indexes_2 = random.sample(range(10), k=self._tournament_size)
+                # idx2 = random.choices(indexes_2, k=1, weights=self._tournament_prob)[0]
+                # idx2 = random.choices(indexes_2, k=1)[0]
+                idx2 = random.choice(range(10))
                 sol1, fitness_1 = self._population[idx]
                 sol2, fitness_2 = self._population[idx2]
                 # TODO:: solve the bias problem!!!!! crossover doesn't set bias
                 crossover_sol = FFSN_GeneticMultiClass.crossover(sol1, sol2)
                 crossover_sol_fitness = crossover_sol.fitness(self._dataset.x_train, self._dataset.y_train)
+                # print(f"crossover {idx}<->{idx2}: {fitness_1}<->{fitness_2}, got:{crossover_sol_fitness}")
                 next_gen.append((crossover_sol, crossover_sol_fitness))
                 crossover_idx += 1
 
             next_gen = self.sort_by_fitness(next_gen)
 
             n_mutations = int(self._n_population * mutation_ratio)
-            ratio_safe = 0.1
+            ratio_safe = 0.05
             safe_idx = int(ratio_safe * self._n_population)
             for mutation_count in range(n_mutations):
                 idx = random.sample(range(safe_idx, self._n_population), k=1)[0]
                 sol, fitness = next_gen.pop(idx)
+
                 sol.mutation()
+                # update temp best
+                best_temp_sol = sol
+                best_temp_fit = sol.fitness(self._dataset.x_train, self._dataset.y_train)
+
                 # print(f"len of pop before:{len(self._population)}")
                 next_gen.append(
-                    (sol, sol.fitness(self._dataset.x_train, self._dataset.y_train))
+                    (best_temp_sol, best_temp_fit)
                 )
                 # print(f"len of pop:{len(self._population)}")
             self._population = next_gen
-            print(f"len of population:{self._population}")
             self.sort_population()
+            print(f"len of population:{self._population}")
 
         if should_graph:
             plot_experiment(
