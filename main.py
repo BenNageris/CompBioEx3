@@ -56,16 +56,19 @@ if __name__ == "__main__":
     enc = OneHotEncoder()
 
     # exercise
-    # nn_0 = DataSet.parse_nn_file(r"nn0.txt")
-    nn_0 = DataSet.parse_nn_file(r"nn1.txt")
+    net_id = 0
+    nn_0 = DataSet.parse_nn_file(f"nn{net_id}.txt")
+    # nn_0 = DataSet.parse_nn_file(r"nn1.txt")
     x_train, x_val, y_train, y_val = nn_0.train_test_split(p_train=0.6)
     print(len(x_train), len(x_val), len(y_train), len(y_val))
 
     # ffsn_multi = FFSN_MultiClass(n_inputs=16, hidden_sizes=[16, 8, 4], n_outputs=2)
-    ffsn_multi = FFSN_MultiClass(n_inputs=17, hidden_sizes=[], n_outputs=2)
+    # ffsn_multi = FFSN_MultiClass(n_inputs=17, hidden_sizes=[17, 8, 4], n_outputs=2)
+    ffsn_multi = FFSN_MultiClass(n_inputs=17, hidden_sizes=[8], n_outputs=2)
 
     y_OH_train = enc.fit_transform(np.expand_dims(y_train, 1)).toarray()
-    ffsn_multi.fit(x_train, y_OH_train, epochs=200, learning_rate=.005, display_loss=True)
+    ffsn_multi.fit(x_train, y_OH_train, epochs=500, learning_rate=.005, display_loss=True)
+    # ffsn_multi.fit(x_train, y_OH_train, epochs=300, learning_rate=.01, display_loss=True)
 
     Y_pred_train = ffsn_multi.predict(x_train)
     Y_pred_train = np.argmax(Y_pred_train, 1)
@@ -79,5 +82,5 @@ if __name__ == "__main__":
     print("Training accuracy", round(accuracy_train, 2))
     print("Validation accuracy", round(accuracy_val, 2))
 
-    ffsn_multi.dump(r"wnet1_nn_bp")
+    ffsn_multi.dump(f"wnet{net_id}_nn_bp")
     # """
