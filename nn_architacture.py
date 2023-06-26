@@ -17,6 +17,7 @@ class NnArchitecture(NNGeneticAbstract):
 
         nn_merged = copy.deepcopy(nn_1)
         nn_merged.dna_architecture = dna_merge
+        nn_merged.regenerate_network()
         return nn_merged
     def mutation(self):
         for key in self.dna_architecture.__dict__.keys():
@@ -26,3 +27,4 @@ class NnArchitecture(NNGeneticAbstract):
                     self.dna_architecture.__dict__[key] += 1
                 else:
                     self.dna_architecture.__dict__[key] -= 1
+        self.regenerate_network()

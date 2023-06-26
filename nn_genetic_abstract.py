@@ -76,14 +76,14 @@ class NNGeneticAbstract:
         self.H[0] = x.reshape(1, -1)
         for i in range(self.nh):
             self.A[i + 1] = np.matmul(self.H[i], self.W[i + 1])
-            self.H[i + 1] = activation_functions.binary_step(self.A[i + 1])
+            self.H[i + 1] = self._activation_func(self.A[i + 1])
             # TODO: think about replacing sigmoid with step
             # print(f"{self.A[i + 1]}")
             # print(f"after step:{activation_functions.binary_step(self.A[i+1])}")
             # self.H[i + 1] = activation_functions.sigmoid(self.A[i + 1])
         self.A[self.nh + 1] = np.matmul(self.H[self.nh], self.W[self.nh + 1])
         # print(f"A-after-all:{self.A[self.nh+1]}")
-        output = activation_functions.binary_step(self.A[self.nh + 1])
+        output = self._activation_func(self.A[self.nh + 1])
         # print(f"A-after-all:{output}")
         return output
         # self.H[self.nh + 1] = activation_functions.softmax(self.A[self.nh + 1])
@@ -125,3 +125,29 @@ class NNGeneticAbstract:
         yl = -np.log(yl)
         yl = np.mean(yl)
         return yl
+
+    def regenerate_network(self):
+        self._activation_func = DnaArchitecture.Activations[self.dna_architecture.activations_idx \
+            % len(DnaArchitecture.Activations)]
+        self.nh = DnaArchitecture.Depth[self.dna_architecture.depth_idx \
+            % len(DnaArchitecture.Depth)]
+        new_size = DnaArchitecture.Layer_Size[self.dna_architecture.layer_size_idx \
+            % len(DnaArchitecture.Layer_Size)]
+        for size in self.sizes:
+            if random.random() < 0.2:
+                size = new_size
+
+        self.W = {}
+        if self.W is None:
+            # randomize if bias or weight isn't passed
+            self.W = {}
+            for i in range(self.nh + 1):
+                self.W[i + 1] = np.random.uniform(-1, 1, size=(self.sizes[i], self.sizes[i + 1]))
+                self._n_neurons += self.W[i + 1].size
+                self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
+        else:
+            self.W = self.W.copy()
+            for i in range(self.nh + 1):
+                self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
+                self._n_neurons += self.W[i + 1].size
+
