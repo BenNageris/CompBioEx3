@@ -12,91 +12,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from dataset import DataSet
+from nn_genetic_abstract import NNGeneticAbstract
 
 
-class FFSN_GeneticMultiClass:
-    def __init__(
-            self,
-            n_inputs: int,
-            n_outputs: int,
-            hidden_sizes: List[int],
-            mutation_p: float = 1.0,
-            max_mutation_diff: float = 0.3,
-            w: Optional[Dict[int, np.array]] = None,
-            activation_func: Callable = activation_functions.binary_step
-    ):
-        self.nx = n_inputs
-        self.ny = n_outputs
-        self.hidden_sizes = hidden_sizes
-        self.nh = len(hidden_sizes)
-        self._max_mutation_diff = max_mutation_diff
-        self.sizes = [self.nx] + hidden_sizes + [self.ny]
-        self._activation_func = activation_func
-        self._w_layer_size = {}
-        self._n_neurons = 0
-
-        if w is None:
-            # randomize if bias or weight isn't passed
-            self.W = {}
-            for i in range(self.nh + 1):
-                self.W[i + 1] = np.random.uniform(-1, 1, size=(self.sizes[i], self.sizes[i + 1]))
-                # self.W[i + 1] = np.random.randn(self.sizes[i], self.sizes[i + 1])
-                self._n_neurons += self.W[i + 1].size
-                self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
-        else:
-            # print(f"w={hex(id(w))}")
-            self.W = w.copy()
-            for i in range(self.nh + 1):
-                self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
-                self._n_neurons += self.W[i + 1].size
-        self._w_layers_idx = list(self.W.keys())
-        self._max_layer_idx = max(self._w_layers_idx)
-        self._mutation_p = mutation_p
-
-    def dump(self, path: str) -> None:
-        with open(path, "wb") as f:
-            pickle.dump(self, f)
-
-    @staticmethod
-    def load(path: str) -> FFSN_GeneticMultiClass:
-        with open(path, "rb") as f:
-            return pickle.load(f)
-
-    def fitness(self, x, y):
-        Y_pred = self.predict(x)
-        # print(Y_pred)
-        # Y_pred = np.argmax(Y_pred, 1)
-
-        return accuracy_score(Y_pred, y)
-
-    def forward_pass(self, x):
-        self.A = {}
-        self.H = {}
-        self.H[0] = x.reshape(1, -1)
-        for i in range(self.nh):
-            self.A[i + 1] = np.matmul(self.H[i], self.W[i + 1])
-            self.H[i + 1] = activation_functions.binary_step(self.A[i + 1])
-            # TODO: think about replacing sigmoid with step
-            # print(f"{self.A[i + 1]}")
-            # print(f"after step:{activation_functions.binary_step(self.A[i+1])}")
-            # self.H[i + 1] = activation_functions.sigmoid(self.A[i + 1])
-        self.A[self.nh + 1] = np.matmul(self.H[self.nh], self.W[self.nh + 1])
-        # print(f"A-after-all:{self.A[self.nh+1]}")
-        output = activation_functions.binary_step(self.A[self.nh + 1])
-        # print(f"A-after-all:{output}")
-        return output
-        # self.H[self.nh + 1] = activation_functions.softmax(self.A[self.nh + 1])
-        # print(f"out-after-all:{self.H[self.nh + 1]}")
-        # print(self.H[self.nh + 1])
-        # asdasd
-        # return self.H[self.nh + 1]
-
-    def predict(self, X):
-        Y_pred = []
-        for x in X:
-            y_pred = self.forward_pass(x)
-            Y_pred.append(y_pred)
-        return np.array(Y_pred).squeeze()
+class FFSN_GeneticMultiClass(NNGeneticAbstract):
 
     def mutation(self):
         # randomized_layer = random.choice(self._w_layers_idx)
@@ -112,7 +31,7 @@ class FFSN_GeneticMultiClass:
             self.W[layer_idx] = np.array(layer)
 
     @staticmethod
-    def crossover(nn_1: FFSN_GeneticMultiClass, nn_2: FFSN_GeneticMultiClass) -> FFSN_GeneticMultiClass:
+    def crossover(nn_1: NNGeneticAbstract, nn_2: NNGeneticAbstract) -> NNGeneticAbstract:
         assert nn_1._n_neurons == nn_2._n_neurons, (f"number of neurons don't match nn_1:"
                                                     f"{nn_1._n_neurons}, nn_2:{nn_2._n_neurons}")
         """
@@ -176,11 +95,3 @@ class FFSN_GeneticMultiClass:
                 return layer, int(idx / layer_y_size), idx % layer_y_size
             n_neurons_passed += n_current_layer
         return None
-
-    @staticmethod
-    def cross_entropy(label, pred):
-        yl = np.multiply(pred, label)
-        yl = yl[yl != 0]
-        yl = -np.log(yl)
-        yl = np.mean(yl)
-        return yl
