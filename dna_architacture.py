@@ -1,8 +1,11 @@
+from activation_functions import relu, softmax, tanh, sigmoid
+
+
 class DnaArchitecture:
-    Depth = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    Depth = [3, 4, 5, 6, 7, 8, 9, 10, 1, 2]
     Layer_Size = [16, 32, 64, 128, 256, 512, 1024]
-    Activations = ["tanh", "softmax", "relu",
-                   "sigmoid"]
+    Activations = [relu, softmax, tanh,
+                   sigmoid]
     Optimizer = ["sgd", "rmsprop", "adagrad", "adadelta", "adam", "adamax", "nadam"],
     Losses = ["mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error",
               "mean_squared_logarithmic_error", "squared_hinge", "hinge", "categorical_hinge", "logcosh",

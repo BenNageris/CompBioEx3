@@ -23,7 +23,7 @@ class NNGeneticAbstract:
             max_mutation_diff: float = 0.3,
             w: Optional[Dict[int, np.array]] = None,
             activation_func: Callable = activation_functions.binary_step,
-            dna_architecture: DnaArchitecture = None
+            dna_architecture: DnaArchitecture = DnaArchitecture(1,1,1,1,1)
     ):
         self.nx = n_inputs
         self.ny = n_outputs
@@ -75,9 +75,15 @@ class NNGeneticAbstract:
         self.H = {}
         self.H[0] = x.reshape(1, -1)
         for i in range(self.nh):
-            self.A[i + 1] = np.matmul(self.H[i], self.W[i + 1])
-            self.H[i + 1] = self._activation_func(self.A[i + 1])
-            # TODO: think about replacing sigmoid with step
+            #print(i,self.nh)
+            try:
+                self.A[i + 1] = np.matmul(self.H[i], self.W[i + 1])
+                self.H[i + 1] = self._activation_func(self.A[i + 1])
+                # TODO: think about replacing sigmoid with step
+            #TODO: fix index\key error
+            except Exception as e:
+                print(e)
+                pass
             # print(f"{self.A[i + 1]}")
             # print(f"after step:{activation_functions.binary_step(self.A[i+1])}")
             # self.H[i + 1] = activation_functions.sigmoid(self.A[i + 1])
@@ -129,25 +135,23 @@ class NNGeneticAbstract:
     def regenerate_network(self):
         self._activation_func = DnaArchitecture.Activations[self.dna_architecture.activations_idx \
             % len(DnaArchitecture.Activations)]
-        self.nh = DnaArchitecture.Depth[self.dna_architecture.depth_idx \
-            % len(DnaArchitecture.Depth)]
+        #self.nh = DnaArchitecture.Depth[self.dna_architecture.depth_idx \
+        #    % len(DnaArchitecture.Depth)]
         new_size = DnaArchitecture.Layer_Size[self.dna_architecture.layer_size_idx \
             % len(DnaArchitecture.Layer_Size)]
         for size in self.sizes:
             if random.random() < 0.2:
                 size = new_size
-
-        self.W = {}
+        for i in range(self.nh-len(self.sizes)):
+            self.sizes.append(new_size)
         if self.W is None:
             # randomize if bias or weight isn't passed
             self.W = {}
             for i in range(self.nh + 1):
                 self.W[i + 1] = np.random.uniform(-1, 1, size=(self.sizes[i], self.sizes[i + 1]))
-                self._n_neurons += self.W[i + 1].size
                 self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
         else:
             self.W = self.W.copy()
             for i in range(self.nh + 1):
                 self._w_layer_size[i + 1] = self.sizes[i] * self.sizes[i + 1]
-                self._n_neurons += self.W[i + 1].size
 

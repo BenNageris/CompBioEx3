@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 
@@ -17,3 +19,9 @@ def binary_step(x):
 def softmax(x):
     exps = np.exp(x)
     return exps / np.sum(exps)
+
+def tanh(x):
+    return math.tanh(x)
+
+def relu(x):
+    return max(0, x)

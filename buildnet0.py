@@ -2,7 +2,7 @@ from dataset import DataSet
 from genetic_algo import GeneticAlgo
 
 from nn_genetic import FFSN_GeneticMultiClass
-
+from nn_architacture import NnArchitecture
 DUMP_TO_FILE = "wnet0"
 
 if __name__ == "__main__":
@@ -18,6 +18,7 @@ if __name__ == "__main__":
         n_population=100,
         tournament_winner_probability=0.5,
         tournament_size=3,
+        population_type=NnArchitecture
     )
 
     genetic.sort_population()
