@@ -4,6 +4,7 @@ import statistics
 from typing import List, Tuple
 from nn_genetic import FFSN_GeneticMultiClass
 from dataset import DataSet
+from nn_genetic_abstract import NNGeneticAbstract
 from utils import Graph, plot_experiment
 
 
@@ -18,10 +19,13 @@ class GeneticAlgo:
             n_outputs=2,
             tournament_winner_probability: float = 0.5,
             tournament_size: int = 3,
+            #type of net
+            population_type=None
     ):
+        self._population_type = population_type
         self._n_population = n_population
         self._dataset = dataset
-        self._population: List[Tuple[FFSN_GeneticMultiClass, float]] = []
+        self._population: List[Tuple[NNGeneticAbstract, float]] = []
         self._n_inputs = n_inputs
         self._hidden_sizes = hidden_sizes
         self._n_outputs = n_outputs
@@ -33,7 +37,7 @@ class GeneticAlgo:
             self._tournament_prob.append(self._tournament_prob[i - 1] * (1.0 - self._tournament_winner_probability))
 
         for i in range(self._n_population):
-            sol = FFSN_GeneticMultiClass(
+            sol = self._population_type(
                     n_inputs=self._n_inputs,
                     hidden_sizes=self._hidden_sizes,
                     n_outputs=self._n_outputs,
@@ -50,7 +54,7 @@ class GeneticAlgo:
         self._population = self.sort_by_fitness(self._population)
 
     @staticmethod
-    def sort_by_fitness(generation: List[Tuple[FFSN_GeneticMultiClass, float]]):
+    def sort_by_fitness(generation: List[Tuple[NNGeneticAbstract, float]]):
         return sorted(generation, key=lambda x: x[1], reverse=True)
 
     def get_avg_fitness(self):
@@ -93,7 +97,7 @@ class GeneticAlgo:
                 sol1, fitness_1 = self._population[idx]
                 sol2, fitness_2 = self._population[idx2]
                 # TODO:: solve the bias problem!!!!! crossover doesn't set bias
-                crossover_sol = FFSN_GeneticMultiClass.crossover(sol1, sol2)
+                crossover_sol = self._population_type.crossover(sol1, sol2)
                 crossover_sol_fitness = crossover_sol.fitness(self._dataset.x_train, self._dataset.y_train)
                 # print(f"crossover {idx}<->{idx2}: {fitness_1}<->{fitness_2}, got:{crossover_sol_fitness}")
                 next_gen.append((crossover_sol, crossover_sol_fitness))
