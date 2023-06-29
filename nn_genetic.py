@@ -47,21 +47,21 @@ class GeneticNNWeightSolver:
             "n_inputs": self.nx,
             "n_outputs": self.ny,
             "hidden_sizes": self.hidden_sizes,
-            "w": json.dumps({k: v.tolist() for k, v in self.W.items()}),
+            "w": {k: v.tolist() for k, v in self.W.items()},
         }
-        with open(path, "wb") as f:
+        with open(path, "w") as f:
             json.dump(json_dict, f)
 
     @staticmethod
     def load(path: str) -> GeneticNNWeightSolver:
-        with open(path, "rb") as f:
+        with open(path, "r") as f:
             json_dict = json.load(f)
 
         return GeneticNNWeightSolver(
             n_inputs=json_dict["n_inputs"],
             n_outputs=json_dict["n_outputs"],
             hidden_sizes=json_dict["hidden_sizes"],
-            w={k: np.array(v) for k, v in json_dict["w"]},
+            w={int(k): np.array(v) for k, v in json_dict["w"].items()},
         )
 
     def fitness(self, x, y):

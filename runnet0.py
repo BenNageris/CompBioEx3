@@ -1,12 +1,10 @@
-import pickle
+import utils
+from nn_genetic import GeneticNNWeightSolver
 
-from nn_genetic import FFSN_GeneticMultiClass
-from dataset import DataSet
+DEFAULT_MODEL = "wnet0"
+DEFAULT_TESTNET_FILE = "testnet0"
+OUTPUT_FILE = "output-testnet0"
 
 if __name__ == "__main__":
-    nn_1 = DataSet.parse_nn_file(r"nn0.txt", p_train=0.7)
-
-    with open(r"wnet0", "rb") as f:
-        model = pickle.load(f)
-
-    print(model.fitness(nn_1.x_val, nn_1.y_val))
+    model = GeneticNNWeightSolver.load(path=DEFAULT_MODEL)
+    utils.runnet_func(model=model, path=DEFAULT_TESTNET_FILE, output=OUTPUT_FILE)
