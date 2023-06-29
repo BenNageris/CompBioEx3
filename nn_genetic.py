@@ -3,7 +3,6 @@ from typing import List, Dict, Optional, Callable
 
 import numpy.random
 from sklearn.metrics import accuracy_score
-# import pickle
 import json
 import activation_functions
 import numpy as np
@@ -93,7 +92,7 @@ class GeneticNNWeightSolver:
             for layer_weights in self.W[layer_idx]:
                 tmp_layer = []
                 for neuron in layer_weights:
-                    d = numpy.random.normal() * 0.05
+                    d = numpy.random.normal() * 0.02
                     tmp_layer.append(neuron + d)
                 layer.append(tmp_layer)
             self.W[layer_idx] = np.array(layer)

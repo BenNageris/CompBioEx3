@@ -15,7 +15,7 @@ if __name__ == "__main__":
         n_population=100,
     )
 
-    genetic.solve(n_episodes=100, should_graph=True)
+    genetic.solve(n_episodes=200, should_graph=True)
     genetic._best_sol.dump(DUMP_TO_FILE)
 
     print(f"fitness score on test:{genetic._best_sol.fitness(nn_1.x_test, nn_1.y_test)}")
