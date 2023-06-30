@@ -1,66 +1,57 @@
 from __future__ import annotations
-
-import random
-from typing import  List, Optional
+from typing import List, Dict, Tuple
 
 import numpy
 
 
 class DataSet:
-    P_TRAIN_DEFAULT = 0.75
+    def __init__(
+            self,
+            train_dataset_list: List,
+            test_dataset_list: List
+    ):
+        self._train_dataset_list = train_dataset_list
+        self._test_dataset_list = test_dataset_list
 
-    def __init__(self, nn_dataset_list: List, nn_dataset_dict, p_train: float = P_TRAIN_DEFAULT):
-        self._nn_dataset_list = nn_dataset_list
-        self._nn_dataset_dict = nn_dataset_dict
-        self._p_train = p_train
+        self.x_train, self.y_train = self._parse_datasets(self._train_dataset_list)
+        self.x_test, self.y_test = self._parse_datasets(self._test_dataset_list)
 
-        self.x_train, self.x_val, self.y_train, self.y_val = self.train_test_split(self._p_train)
+    @staticmethod
+    def _parse_datasets(nn_dataset_list: List) -> Tuple[List, List]:
+        x = []
+        y = []
+        for bitwise_str, classification in nn_dataset_list:
+            x.append(bitwise_str)
+            y.append(classification)
+        return x, y
 
     @staticmethod
     def _transform_bias(bitwise_str: str) -> str:
         return bitwise_str + "1"
 
     @staticmethod
-    def parse_nn_file(path: str, p_train: float = P_TRAIN_DEFAULT) -> DataSet:
+    def transform_input(bitwise_str: str) -> numpy.array:
+        bitwise_txt = DataSet._transform_bias(bitwise_str)
+        return numpy.array([int(bit) for bit in bitwise_txt])
+
+    @staticmethod
+    def _parse_input_file(path: str) -> List:
+        if path is None:
+            return []
         with open(path, "r") as f:
-            classifications_lines = f.readlines()
-        nn_dataset_dict = {}
+            classifications = f.readlines()
         nn_dataset_list = []
-        for row in classifications_lines:
+        for row in classifications:
             bitwise_txt, classification = row.split()
-            bitwise_txt = DataSet._transform_bias(bitwise_txt)
-            nn_dataset_list.append((numpy.array([int(bit) for bit in bitwise_txt]), int(classification)))
-            nn_dataset_dict[bitwise_txt] = classification
+            nn_dataset_list.append((DataSet.transform_input(bitwise_txt), int(classification)))
+        return nn_dataset_list
+
+    @staticmethod
+    def parse_nn_file(train_path: str = None, test_path: str = None) -> DataSet:
+        train_dataset_list = DataSet._parse_input_file(train_path)
+        test_dataset_list = DataSet._parse_input_file(test_path)
+
         return DataSet(
-            nn_dataset_list=nn_dataset_list,
-            nn_dataset_dict=nn_dataset_dict,
-            p_train=p_train
+            train_dataset_list=train_dataset_list,
+            test_dataset_list=test_dataset_list,
         )
-
-    def get_classification(self, bitwise_txt: str) -> Optional[str]:
-        if bitwise_txt not in self._nn_dataset_dict:
-            return None
-        return self._nn_dataset_dict[bitwise_txt]
-
-    def train_test_split(self, p_train: float):
-        if p_train < 0 or p_train > 1:
-            # default value
-            p_train = DataSet.P_TRAIN_DEFAULT
-        n_to_select = int(p_train * len(self._nn_dataset_list))
-        train_indexes = set(random.sample(range(len(self._nn_dataset_list)), k=n_to_select))
-        assert n_to_select == len(train_indexes), "Error, n_to_select and len of train indexes don't match"
-
-        x_train = []
-        y_train = []
-        x_val = []
-        y_val = []
-        for nn_dataset_idx in range(len(self._nn_dataset_list)):
-            bitwise_txt, classification = self._nn_dataset_list[nn_dataset_idx]
-            if nn_dataset_idx in train_indexes:
-                # if was sampled
-                x_train.append(bitwise_txt)
-                y_train.append(classification)
-            else:
-                x_val.append(bitwise_txt)
-                y_val.append(classification)
-        return numpy.array(x_train), numpy.array(x_val), numpy.array(y_train), numpy.array(y_val)
