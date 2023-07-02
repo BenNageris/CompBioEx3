@@ -1,7 +1,7 @@
 import utils
 from nn_genetic import GeneticNNWeightSolver
 
-DEFAULT_MODEL = "wnet0"
+DEFAULT_MODEL = "wnet0.txt"
 DEFAULT_TESTNET_FILE = "testnet0"
 OUTPUT_FILE = "output-testnet0"
 

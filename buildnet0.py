@@ -6,7 +6,7 @@ DUMP_TO_FILE = "wnet0.txt"
 
 if __name__ == "__main__":
     nn_0 = DataSet.parse_nn_file(r"nn0_train.txt", "nn0_test.txt")
-    
+
     genetic = GeneticAlgo(
         n_inputs=17,
         hidden_sizes=[8],
