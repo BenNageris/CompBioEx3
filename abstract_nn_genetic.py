@@ -7,6 +7,9 @@ import activation_functions
 
 
 class AbstractNNGenetic:
+    """
+    This class Represents the Generic Neural network solution
+    """
     def __init__(
             self,
             n_inputs: int,

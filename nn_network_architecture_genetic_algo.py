@@ -7,6 +7,9 @@ from nn_architecture import GeneticNNArchitectureSolver
 
 
 class NNNetworkArchitectureGeneticAlgo:
+    """
+    This class presents a Genetic Algorithm execution to find the optimal architecture
+    """
     def __init__(
             self,
             n_population: int,
@@ -46,16 +49,29 @@ class NNNetworkArchitectureGeneticAlgo:
             print(f"{genetic_arch_solver.hidden_sizes}: {fitness}")
 
     def sort_population(self):
+        """
+        sorts the population by its fitness score
+        """
         self._population = self.sort_by_fitness(self._population)
 
     @staticmethod
     def sort_by_fitness(generation: List[Tuple[GeneticNNArchitectureSolver, float]]):
+        """
+        :param generation: List of tuples, each tuple is the NN Architecture and it's fitness score
+        :return: sorted generation by its fitness score
+        """
         return sorted(generation, key=lambda x: x[1], reverse=True)
 
     def get_avg_fitness(self):
+        """
+        :return: average fitness of the population
+        """
         return statistics.mean([fit for _, fit in self._population])
 
     def solve(self, n_episodes: int):
+        """
+        :param n_episodes: int
+        """
         self.sort_population()
 
         elitism_ratio = 0.2
@@ -89,7 +105,7 @@ class NNNetworkArchitectureGeneticAlgo:
                 crossover_sol = GeneticNNArchitectureSolver.crossover(sol1, sol2)
                 crossover_sol_fitness = crossover_sol.fitness(n_episodes=self._n_episodes_per_fitness)
                 next_gen.append((crossover_sol, crossover_sol_fitness))
-
+                print(f"found {crossover_sol.hidden_sizes} with fitness:{crossover_sol_fitness}")
             next_gen = self.sort_by_fitness(next_gen)
 
             n_mutations = int(self._n_population * self._mutation_ratio)
@@ -106,6 +122,12 @@ class NNNetworkArchitectureGeneticAlgo:
 
                 next_gen.append(
                     (best_temp_sol, best_temp_fit)
+                )
+                print(
+                    (
+                        f"mutated architecture with hidden size: {best_temp_sol.hidden_sizes} "
+                        f"with fitness:{best_temp_fit}"
+                    )
                 )
             self._population = next_gen
             self.sort_population()

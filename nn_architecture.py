@@ -10,6 +10,9 @@ from dataset import DataSet
 
 
 class GeneticNNArchitectureSolver(AbstractNNGenetic):
+    """
+    This class presents the Genetic Neural Network Architecture Solution Algorithm
+    """
     POSSIBLE_LAYERS_SIZE = [2, 4, 6, 8]
     MAX_HIDDEN_LAYERS_SIZE = 3
     EXECUTION_EPISODES = 100
@@ -31,6 +34,10 @@ class GeneticNNArchitectureSolver(AbstractNNGenetic):
         self.best_sol = None
 
     def fitness(self, n_episodes: int = 100) -> float:
+        """
+        :param n_episodes: number of episodes to evaluate a NN architecture
+        :return: the fitness score (float) of a NN architecture
+        """
         genetic_algo = GeneticAlgo(
             n_inputs=self.nx,
             n_outputs=self.ny,
@@ -45,6 +52,11 @@ class GeneticNNArchitectureSolver(AbstractNNGenetic):
 
     @staticmethod
     def crossover(nn_1: GeneticNNArchitectureSolver, nn_2: GeneticNNArchitectureSolver) -> GeneticNNArchitectureSolver:
+        """
+        :param nn_1: GeneticNNArchitectureSolver
+        :param nn_2: GeneticNNArchitectureSolver
+        :return: returns a new NN architecture offspring created using the two parents
+        """
         nn_1_idx = random.choice(range(nn_1.nh)) if nn_1.nh > 0 else 0
         nn_2_idx = random.choice(range(nn_2.nh + 1))
 
@@ -62,6 +74,9 @@ class GeneticNNArchitectureSolver(AbstractNNGenetic):
         )
 
     def mutation(self):
+        """
+        :return: mutates the NN Architecture
+        """
         if self.nh == 0:
             return
         layer_idx = random.choice(range(self.nh))
@@ -69,6 +84,9 @@ class GeneticNNArchitectureSolver(AbstractNNGenetic):
 
     @staticmethod
     def randomize_hidden_size():
+        """
+        :return: returns a list of a randomized NN architecture
+        """
         n_layers = random.randint(0, GeneticNNArchitectureSolver.MAX_HIDDEN_LAYERS_SIZE)
         hidden_sizes = []
         while len(hidden_sizes) != n_layers:
