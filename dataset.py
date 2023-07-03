@@ -5,6 +5,9 @@ import numpy
 
 
 class DataSet:
+    """
+    The DataSet class, it hold the train and test data
+    """
     def __init__(
             self,
             train_dataset_list: List,

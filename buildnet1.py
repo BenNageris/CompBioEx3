@@ -2,7 +2,7 @@ from dataset import DataSet
 from genetic_algo import GeneticAlgo
 from nn_genetic import GeneticNNWeightSolver
 
-DUMP_TO_FILE = "wnet1"
+DUMP_TO_FILE = "wnet1.txt"
 
 if __name__ == "__main__":
     nn_1 = DataSet.parse_nn_file(r"nn1_train.txt", "nn1_test.txt")
