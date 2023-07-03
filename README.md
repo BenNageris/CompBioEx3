@@ -1,3 +1,4 @@
+```
 Computational Biology Ex3:
 
 By: 
@@ -26,3 +27,4 @@ Execution Steps:
 		or, if you are at output\buildnet0 you will have to execute: .\buildnet0.exe
 
 (*) We tested this program on a Windows PC with python3.9 installed.
+```
